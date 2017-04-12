@@ -20,28 +20,70 @@ object Monoid {
     val zero = Nil
   }
 
-  val intAddition: Monoid[Int] = sys.error("todo")
+  val intAddition: Monoid[Int] = new Monoid[Int] {
+    override def op(a1: Int, a2: Int): Int = a1 + a2
 
-  val intMultiplication: Monoid[Int] = sys.error("todo")
+    override def zero: Int = 0
+  }
 
-  val booleanOr: Monoid[Boolean] = sys.error("todo")
+  val intMultiplication: Monoid[Int] = new Monoid[Int] {
+    override def op(a1: Int, a2: Int): Int = a1 * a2
 
-  val booleanAnd: Monoid[Boolean] = sys.error("todo")
+    override def zero: Int = 1
+  }
 
-  def optionMonoid[A]: Monoid[Option[A]] = sys.error("todo")
+  val booleanOr: Monoid[Boolean] = new Monoid[Boolean] {
+    override def op(a1: Boolean, a2: Boolean): Boolean = a1 || a2
 
-  def endoMonoid[A]: Monoid[A => A] = sys.error("todo")
+    override def zero: Boolean = false
+  }
 
-  // TODO: Placeholder for `Prop`. Remove once you have implemented the `Prop`
-  // data type from Part 2.
-  trait Prop {}
+  val booleanAnd: Monoid[Boolean] = new Monoid[Boolean] {
+    override def op(a1: Boolean, a2: Boolean): Boolean = a1 && a2
 
-  // TODO: Placeholder for `Gen`. Remove once you have implemented the `Gen`
-  // data type from Part 2.
+    override def zero: Boolean = true
+  }
+
+  def optionMonoid[A]: Monoid[Option[A]] = {
+    new Monoid[Option[A]] {
+      override def op(a1: Option[A], a2: Option[A]): Option[A] = a1 orElse a2
+
+      override def zero: Option[A] = None
+    }
+  }
+
+  def endoMonoid[A]: Monoid[A => A] = {
+    new Monoid[A => A] {
+      override def op(a1: (A) => A, a2: (A) => A): (A) => A = a1 compose a2
+
+      override val zero: (A) => A = a => a
+    }
+  }
+
+  def dual[A](monoid: Monoid[A]): Monoid[A] = {
+    new Monoid[A] {
+      override def op(a1: A, a2: A): A = monoid.op(a2, a1)
+
+      override val zero: A = monoid.zero
+    }
+  }
 
   import fpinscala.testing._
   import Prop._
-  def monoidLaws[A](m: Monoid[A], gen: Gen[A]): Prop = sys.error("todo")
+  def monoidLaws[A](m: Monoid[A], gen: Gen[A]): Prop = {
+    forAll(for {
+      x <- gen
+      y <- gen
+      z <- gen
+    } yield (x, y, z)) {
+      case (x, y, z) =>
+        m.op(x, m.op(y, z)) == m.op(m.op(x, y), z)
+    } &&
+    forAll(gen) {
+      x =>
+        m.op(x, m.zero) == m.op(m.zero, x)
+    }
+  }
 
   def trimMonoid(s: String): Monoid[String] = sys.error("todo")
 
@@ -49,13 +91,13 @@ object Monoid {
     sys.error("todo")
 
   def foldMap[A, B](as: List[A], m: Monoid[B])(f: A => B): B =
-    sys.error("todo")
+    as.foldLeft(m.zero)((b, a) => m.op(b, f(a)))
 
   def foldRight[A, B](as: List[A])(z: B)(f: (A, B) => B): B =
-    sys.error("todo")
+    foldMap(as, endoMonoid[B])(f.curried)(z)
 
   def foldLeft[A, B](as: List[A])(z: B)(f: (B, A) => B): B =
-    sys.error("todo")
+    foldMap(as, dual(endoMonoid[B]))(a => b => f(b, a))(z)
 
   def foldMapV[A, B](as: IndexedSeq[A], m: Monoid[B])(f: A => B): B =
     sys.error("todo")
