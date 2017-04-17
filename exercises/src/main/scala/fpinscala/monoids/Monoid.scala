@@ -116,9 +116,29 @@ object Monoid {
   def parFoldMap[A,B](v: IndexedSeq[A], m: Monoid[B])(f: A => B): Par[B] = 
     sys.error("todo") 
 
-  val wcMonoid: Monoid[WC] = sys.error("todo")
+  val wcMonoid: Monoid[WC] = new Monoid[WC] {
+    override def op(a1: WC, a2: WC): WC = {
+      case (Part(l1, w1, r1), Part(l2, w2, r2)) =>
+        if (r1 == "" && l2 == "") Part(l1, w1 + w2, r2)
+        else Part(l1, w1 + w2 + 1, r2)
+      case (Stub(l1), Part(l2, w2, r2)) => Part(l1 + l2, w2, r2)
+      case (Part(l1, w1, r1), Stub(l2)) => Part(l1, w1, r1 + l2)
+      case (Stub(l1), Stub(l2)) => Stub(l1 + l2)
+    }
 
-  def count(s: String): Int = sys.error("todo")
+    override def zero: WC = Stub("")
+  }
+
+  def count(s: String): Int = {
+    foldMapV(s, wcMonoid){
+      c =>
+        if (c.isWhitespace) Part("", 0, "")
+        else Stub(c.toString)
+    } match {
+      case Stub(l) => l.length min 1
+      case Part(l, w, r) => (l.length min 1) + w + (r.length min 1)
+    }
+  }
 
   def productMonoid[A,B](A: Monoid[A], B: Monoid[B]): Monoid[(A, B)] =
     sys.error("todo")
@@ -137,19 +157,19 @@ trait Foldable[F[_]] {
   import Monoid._
 
   def foldRight[A, B](as: F[A])(z: B)(f: (A, B) => B): B =
-    sys.error("todo")
+    foldMap(as)(f.curried)(endoMonoid[B])(z)
 
   def foldLeft[A, B](as: F[A])(z: B)(f: (B, A) => B): B =
-    sys.error("todo")
+    foldMap(as)(a => (b: B) => f(b, a))(dual(endoMonoid[B]))(z)
 
   def foldMap[A, B](as: F[A])(f: A => B)(mb: Monoid[B]): B =
-    sys.error("todo")
+    foldRight(as)(mb.zero)((a, b) => mb.op(f(a), b))
 
   def concatenate[A](as: F[A])(m: Monoid[A]): A =
-    sys.error("todo")
+    foldLeft(as)(m.zero)(m.op)
 
   def toList[A](as: F[A]): List[A] =
-    sys.error("todo")
+    foldRight(as)(List[A]())(_ :: _)
 }
 
 object ListFoldable extends Foldable[List] {
