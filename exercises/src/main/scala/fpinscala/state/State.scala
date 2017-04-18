@@ -40,6 +40,9 @@ object RNG {
     (i/(Int.MaxValue.toDouble + 1), r)
   }
 
+  def boolean(rng: RNG): (Boolean, RNG) =
+    rng.nextInt match { case (i,rng2) => (i%2==0,rng2) }
+
   def intDouble(rng: RNG): ((Int,Double), RNG) = {
     val (i, r1) = rng.nextInt
     val (d, r2) = double(r1)
@@ -53,9 +56,9 @@ object RNG {
   }
 
   def double3(rng: RNG): ((Double,Double,Double), RNG) = {
-    val (d1, r1) = double(r1)
-    val (d2, r2) = double(r2)
-    val (d3, r3) = double(r3)
+    val (d1, r1) = double(rng)
+    val (d2, r2) = double(r1)
+    val (d3, r3) = double(r2)
     ((d1, d2, d3), r3)
   }
 
@@ -143,7 +146,5 @@ object State {
 
   type Rand[A] = State[RNG, A]
 
-  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = {
-    inputs.
-  }
+  def simulateMachine(inputs: List[Input]): State[Machine, (Int, Int)] = ???
 }

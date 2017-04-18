@@ -1,6 +1,7 @@
 package fpinscala.parsing
 
 import language.higherKinds
+import scala.util.matching.Regex
 
 trait Parsers[Parser[+_]] { self => // so inner classes may call methods of trait
 

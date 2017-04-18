@@ -51,16 +51,16 @@ trait Stream[+A] {
   // 5.7 map, filter, append, flatmap using foldRight. Part of the exercise is
   // writing your own function signatures.
   def map[B](f: A => B): Stream[B] =
-    this.foldRight(Empty[B])( (h, t) => cons(f(h), t) )
+    this.foldRight(empty[B])( (h, t) => cons(f(h), t) )
 
   def filter(f: A => Boolean): Stream[A] =
-    foldRight(Empty[A])( (h, t) => if (f(h)) cons(h, t) else t)
+    foldRight(empty[A])( (h, t) => if (f(h)) cons(h, t) else t)
 
   def append[B >: A](b: => Stream[B]): Stream[B] =
     foldRight(b)( (h, t) => cons(h, t) )
 
   def flatMap[B](f: A => Stream[B]): Stream[B] =
-    foldRight(Empty[B])( (h, t) => f(h).append(t) )
+    foldRight(empty[B])( (h, t) => f(h).append(t) )
 
   def mapViaUnfold[B](f: A => B): Stream[B] = unfold(this) {
     case Cons(h, t) => Some((f(h()), t()))
@@ -127,7 +127,7 @@ object Stream {
   val ones: Stream[Int] = Stream.cons(1, ones)
 
   def constant[A](a: A): Stream[A] = {
-    val f = Stream.cons(a, f)
+    lazy val f: Stream[A] = Cons(()=>a, ()=>f)
     f
   }
 

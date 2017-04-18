@@ -16,7 +16,7 @@ sealed trait Either[+E,+A] {
 
  def orElse[EE >: E, B >: A](b: => Either[EE, B]): Either[EE, B] = this match {
    case Left(_) => b
-   case _ => _
+   case Right(a) => Right(a)
  }
 
  def map2[EE >: E, B, C](b: Either[EE, B])(f: (A, B) => C): Either[EE, C] = this.flatMap(a => b.map(f(a, _)))
@@ -50,7 +50,7 @@ object Either {
 trait Partial[+A,+B] {
   def map[C](f: B => C): Partial[A, C] = this match {
     case Success(b) => Success(f(b))
-    case _ => _
+    case Errors(e) => Errors(e)
   }
 
   def map2[AA >: A, C, D](b: Partial[AA, C])(f: (B, C) => D): Partial[AA, D] = this match {
