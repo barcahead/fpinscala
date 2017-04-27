@@ -58,14 +58,12 @@ trait Monad[M[_]] extends Functor[M] {
     compose((_: Unit) => ma, f)(())
 
   def join[A](mma: M[M[A]]): M[A] =
-    flatMap(mma)(_ => _)
+    flatMap(mma)(ma => ma)
 
   // Implement in terms of `join`:
   def __flatMap[A,B](ma: M[A])(f: A => M[B]): M[B] =
     join(map(ma)(f))
 }
-
-case class Reader[R, A](run: R => A)
 
 object Monad {
   val genMonad = new Monad[Gen] {
